@@ -28,10 +28,11 @@ app.post('/analyze', async (req, res) => {
         const data = await response.json();
         console.log("Groq response:", JSON.stringify(data).substring(0, 100));
         res.json(data);
-    } catch (err) {
-        console.error("Error:", err);
-        res.status(500).json({ error: 'Server error' });
-    }
+   } catch (err) {
+    console.error("Full error:", JSON.stringify(err));
+    console.error("Error message:", err.message);
+    res.status(500).json({ error: err.message });
+}
 });
 
 const PORT = process.env.PORT || 3000;
