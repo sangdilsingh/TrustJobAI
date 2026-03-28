@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrustJobAI — Sign In</title>
+    <script src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f3f2ef;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .header { text-align: center; margin-bottom: 32px; }
+        .logo { font-size: 2.5rem; font-weight: 900; letter-spacing: -1px; color: #000000; }
+        .logo span { color: #0a66c2; }
+        .tagline { color: #666666; margin-top: 8px; font-size: 1rem; }
+        .badge {
+            display: inline-block;
+            background: #ffffff;
+            color: #0a66c2;
+            font-size: 0.75rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-top: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border: 1px solid #0a66c2;
+        }
+        #clerk-sign-in {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 10px;
+        }
+        .footer { margin-top: 24px; color: #aaaaaa; font-size: 0.8rem; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">TrustJob<span>AI</span></div>
+        <div class="tagline">AI-powered Job Scam Detector</div>
+        <div class="badge">⚡ Powered by Groq AI</div>
+    </div>
+
+    <div id="clerk-sign-in"></div>
+
+    <div class="footer">TrustJobAI — Helping job seekers stay safe</div>
+
+    <script>
+        const clerk = new Clerk("pk_test_d2lzZS1tb25hcmNoLTg3LmNsZXJrLmFjY291bnRzLmRldiQ");
+        clerk.load().then(() => {
+            if (clerk.user) {
+                window.location.href = "/";
+            } else {
+                clerk.mountSignIn(document.getElementById("clerk-sign-in"), {
+                    afterSignInUrl: "/",
+                    afterSignUpUrl: "/"
+                });
+            }
+        });
+    </script>
+</body>
+</html>
