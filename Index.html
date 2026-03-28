@@ -240,8 +240,6 @@
         .btn-mca:hover { background: #e55a00; }
         .intel-loading { color: #0a66c2; font-size: 0.85rem; display: none; }
         .divider { border: none; border-top: 1px solid #e0e0e0; margin: 24px 0; }
-
-        /* History Section */
         .history-card {
             background: #ffffff;
             border: 1px solid #e0e0e0;
@@ -259,11 +257,7 @@
             align-items: center;
             margin-bottom: 16px;
         }
-        .history-title {
-            font-size: 1rem;
-            font-weight: 800;
-            color: #000000;
-        }
+        .history-title { font-size: 1rem; font-weight: 800; color: #000000; }
         .clear-btn {
             width: auto;
             padding: 6px 16px;
@@ -302,13 +296,6 @@
         .score-red { background: #fff5f5; color: #dc2626; }
         .score-yellow { background: #fffbeb; color: #d97706; }
         .score-green { background: #f0fdf4; color: #16a34a; }
-        .empty-history {
-            text-align: center;
-            color: #aaaaaa;
-            font-size: 0.9rem;
-            padding: 20px;
-        }
-
         .footer { margin-top: 32px; color: #aaaaaa; font-size: 0.8rem; text-align: center; }
     </style>
 </head>
@@ -355,15 +342,14 @@
                 <div class="company-intel-desc" id="intelDesc"></div>
                 <div class="company-links" id="companyLinks"></div>
             </div>
-            <div class="section-title">🔍 AI Analysis</div>
+            <div class="section-title"> AI Analysis</div>
             <div class="reasons" id="reasons"></div>
         </div>
     </div>
 
-    <!-- History Section -->
     <div class="history-card" id="historyCard">
         <div class="history-header">
-            <span class="history-title">🕒 Recent Analysis History</span>
+            <span class="history-title"> Recent Analysis History</span>
             <button class="clear-btn" onclick="clearHistory()">🗑️ Clear All</button>
         </div>
         <div id="historyList"></div>
@@ -372,11 +358,30 @@
     <div class="footer">TrustJobAI — Helping job seekers stay safe · Built with Groq AI</div>
 
     <script>
-        const GROQ_API_KEY = "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";
         let uploadedImages = [];
 
-        // Load history on page load
         window.onload = function() { renderHistory(); };
+
+        // ✅ IMAGE COMPRESSION — fixes large image error
+        function compressImage(file, callback) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX = 800;
+                    let w = img.width, h = img.height;
+                    if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+                    canvas.width = w;
+                    canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    const compressed = canvas.toDataURL('image/jpeg', 0.7);
+                    callback(compressed);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
 
         function handleImageUpload(event) {
             const files = Array.from(event.target.files);
@@ -385,18 +390,18 @@
             const previewContainer = document.getElementById('previewContainer');
             const imageCount = document.getElementById('imageCount');
             previewContainer.innerHTML = '';
+
             files.forEach((file) => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    uploadedImages.push(e.target.result.split(',')[1]);
+                compressImage(file, function(compressed) {
+                    uploadedImages.push(compressed.split(',')[1]);
                     const img = document.createElement('img');
-                    img.src = e.target.result;
+                    img.src = compressed;
                     previewContainer.appendChild(img);
                     imageCount.style.display = 'block';
                     imageCount.textContent = `✅ ${uploadedImages.length} image(s) selected — ready to analyze!`;
-                };
-                reader.readAsDataURL(file);
+                });
             });
+
             document.getElementById('jobInput').value = '';
             document.getElementById('jobInput').placeholder = `${files.length} image(s) uploaded!`;
         }
@@ -412,7 +417,7 @@
                 date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
             };
             history.unshift(entry);
-            if (history.length > 20) history.pop(); // max 20 entries
+            if (history.length > 20) history.pop();
             localStorage.setItem('trustjob_history', JSON.stringify(history));
             renderHistory();
         }
@@ -421,24 +426,18 @@
             const history = JSON.parse(localStorage.getItem('trustjob_history') || '[]');
             const historyCard = document.getElementById('historyCard');
             const historyList = document.getElementById('historyList');
-
-            if (history.length === 0) {
-                historyCard.style.display = 'none';
-                return;
-            }
-
+            if (history.length === 0) { historyCard.style.display = 'none'; return; }
             historyCard.style.display = 'block';
             historyList.innerHTML = history.map(item => {
                 const scoreClass = item.score < 40 ? 'score-red' : item.score < 70 ? 'score-yellow' : 'score-green';
-                return `
-                    <div class="history-item">
-                        <div class="history-item-left">
-                            <span class="history-company">${item.company}</span>
-                            <span class="history-role">${item.role}</span>
-                            <span class="history-date">🕒 ${item.date}</span>
-                        </div>
-                        <span class="history-score ${scoreClass}">${item.score}/100</span>
-                    </div>`;
+                return `<div class="history-item">
+                    <div class="history-item-left">
+                        <span class="history-company">${item.company}</span>
+                        <span class="history-role">${item.role}</span>
+                        <span class="history-date">🕒 ${item.date}</span>
+                    </div>
+                    <span class="history-score ${scoreClass}">${item.score}/100</span>
+                </div>`;
             }).join('');
         }
 
@@ -468,9 +467,9 @@
                 const linkedinUrl = `https://www.linkedin.com/search/results/companies/?keywords=${encodeURIComponent(companyName)}`;
                 const mcaUrl = `https://www.mca.gov.in/mcafoportal/viewCompanyMasterData.do`;
                 let linksHtml = `
-                    <a class="company-link-btn btn-google" href="${googleUrl}" target="_blank">🔍 Google</a>
-                    <a class="company-link-btn btn-linkedin" href="${linkedinUrl}" target="_blank">💼 LinkedIn</a>
-                    <a class="company-link-btn btn-mca" href="${mcaUrl}" target="_blank">📋 MCA Verify</a>
+                    <a class="company-link-btn btn-google" href="${googleUrl}" target="_blank"> Google</a>
+                    <a class="company-link-btn btn-linkedin" href="${linkedinUrl}" target="_blank"> LinkedIn</a>
+                    <a class="company-link-btn btn-mca" href="${mcaUrl}" target="_blank"> MCA Verify</a>
                 `;
                 if (website) linksHtml += `<a class="company-link-btn btn-google" href="${website}" target="_blank">🌐 Website</a>`;
                 document.getElementById('companyLinks').innerHTML = linksHtml;
@@ -521,13 +520,20 @@ Red flags: training fee, unrealistic salary, WhatsApp only, no company name, vag
                     model = "llama-3.3-70b-versatile";
                 }
 
-                const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                // ✅ BACKEND PROXY — API key safe hai server pe
+                const response = await fetch("/analyze", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${GROQ_API_KEY}` },
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ model, messages, temperature: 0.3 })
                 });
 
                 const data = await response.json();
+
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+
                 const text = data.choices[0].message.content;
                 const clean = text.replace(/```json|```/g, "").trim();
                 const parsed = JSON.parse(clean);
@@ -536,7 +542,7 @@ Red flags: training fee, unrealistic salary, WhatsApp only, no company name, vag
                 await fetchCompanyIntel(parsed.details.company);
 
             } catch (err) {
-                alert('Error! Check your API key or try again.');
+                alert('Error! Please try again.');
                 console.error(err);
             } finally {
                 document.getElementById('analyzeBtn').disabled = false;
@@ -554,13 +560,13 @@ Red flags: training fee, unrealistic salary, WhatsApp only, no company name, vag
             else scoreBox.classList.add('green');
             const d = data.details;
             const fields = [
-                { label: '🏢 Company', value: d.company },
-                { label: '💼 Role', value: d.role },
-                { label: '📍 Location', value: d.location },
-                { label: '💰 Salary', value: d.salary },
-                { label: '📧 Email', value: d.email },
-                { label: '📞 Phone', value: d.phone },
-                { label: '⏳ Experience', value: d.experience }
+                { label: ' Company', value: d.company },
+                { label: ' Role', value: d.role },
+                { label: ' Location', value: d.location },
+                { label: ' Salary', value: d.salary },
+                { label: ' Email', value: d.email },
+                { label: ' Phone', value: d.phone },
+                { label: ' Experience', value: d.experience }
             ];
             document.getElementById('jobDetails').innerHTML = fields.map(f => {
                 const isNotFound = f.value === 'Not Mentioned' || f.value === 'Not Found';
@@ -572,4 +578,3 @@ Red flags: training fee, unrealistic salary, WhatsApp only, no company name, vag
     </script>
 </body>
 </html>
-
