@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TrustJobAI — Job Scam Detector</title>
+    <script src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -33,6 +34,32 @@
             text-transform: uppercase;
             border: 1px solid #0a66c2;
         }
+        .user-bar {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            margin-top: 12px;
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 25px;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            color: #444;
+        }
+        .user-bar img { width: 28px; height: 28px; border-radius: 50%; }
+        .logout-btn {
+            background: none;
+            border: 1px solid #e0e0e0;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 0.75rem;
+            color: #dc2626;
+            cursor: pointer;
+            width: auto;
+            margin-top: 0;
+            font-weight: 600;
+        }
+        .logout-btn:hover { background: #fff0f0; }
         .card {
             background: #ffffff;
             border: 1px solid #e0e0e0;
@@ -42,112 +69,35 @@
             max-width: 720px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
-        .label {
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: #444444;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-        }
+        .label { font-size: 0.85rem; font-weight: 700; color: #444444; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
         textarea {
-            width: 100%;
-            height: 180px;
-            background: #f9f9f9;
-            border: 1.5px solid #e0e0e0;
-            border-radius: 10px;
-            color: #000000;
-            padding: 16px;
-            font-size: 0.95rem;
-            resize: vertical;
-            outline: none;
-            transition: border 0.2s;
-            line-height: 1.6;
+            width: 100%; height: 180px; background: #f9f9f9; border: 1.5px solid #e0e0e0;
+            border-radius: 10px; color: #000000; padding: 16px; font-size: 0.95rem;
+            resize: vertical; outline: none; transition: border 0.2s; line-height: 1.6;
             font-family: 'Segoe UI', sans-serif;
         }
         textarea:focus { border-color: #0a66c2; }
         textarea::placeholder { color: #aaaaaa; }
-        .or-divider {
-            text-align: center;
-            margin: 12px 0;
-            color: #aaaaaa;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
+        .or-divider { text-align: center; margin: 12px 0; color: #aaaaaa; font-size: 0.85rem; font-weight: 600; }
         .upload-area {
-            width: 100%;
-            margin-top: 12px;
-            border: 2px dashed #e0e0e0;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: 0.2s;
-            background: #f9f9f9;
-            position: relative;
+            width: 100%; margin-top: 12px; border: 2px dashed #e0e0e0; border-radius: 10px;
+            padding: 20px; text-align: center; cursor: pointer; transition: 0.2s;
+            background: #f9f9f9; position: relative;
         }
         .upload-area:hover { border-color: #0a66c2; background: #f0f7ff; }
-        .upload-area input {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
-            opacity: 0; cursor: pointer;
-        }
+        .upload-area input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
         .upload-area p { color: #666666; font-size: 0.9rem; }
         .upload-area span { color: #0a66c2; font-weight: 600; }
-        .preview-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-            gap: 8px;
-            margin-top: 10px;
-        }
-        .preview-container img {
-            width: 100%;
-            height: 100px;
-            object-fit: cover;
-            border-radius: 8px;
-            border: 1px solid #e0e0e0;
-        }
-        .image-count {
-            text-align: center;
-            margin-top: 8px;
-            font-size: 0.85rem;
-            color: #0a66c2;
-            font-weight: 600;
-            display: none;
-        }
-        button {
-            width: 100%;
-            margin-top: 16px;
-            padding: 15px;
-            background: #0a66c2;
-            color: #ffffff;
-            border: none;
-            border-radius: 25px;
-            font-size: 1rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.2s;
-            letter-spacing: 0.5px;
-        }
+        .preview-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-top: 10px; }
+        .preview-container img { width: 100%; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #e0e0e0; }
+        .image-count { text-align: center; margin-top: 8px; font-size: 0.85rem; color: #0a66c2; font-weight: 600; display: none; }
+        button { width: 100%; margin-top: 16px; padding: 15px; background: #0a66c2; color: #ffffff; border: none; border-radius: 25px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: 0.2s; letter-spacing: 0.5px; }
         button:hover { background: #004182; }
         button:disabled { background: #cccccc; color: #888888; cursor: not-allowed; }
-        .loader {
-            text-align: center;
-            margin-top: 24px;
-            color: #0a66c2;
-            font-size: 0.95rem;
-            display: none;
-            animation: pulse 1.5s infinite;
-        }
+        .loader { text-align: center; margin-top: 24px; color: #0a66c2; font-size: 0.95rem; display: none; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
         .result { margin-top: 28px; display: none; }
-        .score-box {
-            border-radius: 12px;
-            padding: 28px;
-            text-align: center;
-            margin-bottom: 16px;
-            border: 2px solid;
-        }
+        .score-box { border-radius: 12px; padding: 28px; text-align: center; margin-bottom: 16px; border: 2px solid; }
         .score-box.red { background: #fff5f5; border-color: #dc2626; }
         .score-box.yellow { background: #fffbeb; border-color: #d97706; }
         .score-box.green { background: #f0fdf4; border-color: #16a34a; }
@@ -155,83 +105,23 @@
         .score-box.red .score-number { color: #dc2626; }
         .score-box.yellow .score-number { color: #d97706; }
         .score-box.green .score-number { color: #16a34a; }
-        .score-label {
-            font-size: 1rem;
-            font-weight: 800;
-            margin-top: 6px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
+        .score-label { font-size: 1rem; font-weight: 800; margin-top: 6px; letter-spacing: 2px; text-transform: uppercase; }
         .score-box.red .score-label { color: #dc2626; }
         .score-box.yellow .score-label { color: #d97706; }
         .score-box.green .score-label { color: #16a34a; }
-        .section-title {
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: #444444;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 12px;
-            margin-top: 16px;
-        }
-        .details-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            background: #f9f9f9;
-            border: 1px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 16px;
-        }
+        .section-title { font-size: 0.8rem; font-weight: 700; color: #444444; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; margin-top: 16px; }
+        .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px; margin-bottom: 16px; }
         .detail-item { display: flex; flex-direction: column; gap: 4px; }
-        .detail-label {
-            font-size: 0.75rem;
-            color: #888888;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 600;
-        }
+        .detail-label { font-size: 0.75rem; color: #888888; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
         .detail-value { font-size: 0.95rem; color: #000000; font-weight: 600; }
         .detail-value.not-found { color: #aaaaaa; font-style: italic; font-weight: 400; }
-        .reasons {
-            background: #f9f9f9;
-            border: 1px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 20px 24px;
-            line-height: 2;
-            font-size: 0.95rem;
-            color: #333333;
-        }
-        .company-intel {
-            background: #f0f7ff;
-            border: 1px solid #0a66c2;
-            border-radius: 12px;
-            padding: 20px 24px;
-            margin-bottom: 16px;
-            display: none;
-        }
-        .company-intel-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 12px;
-        }
+        .reasons { background: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px 24px; line-height: 2; font-size: 0.95rem; color: #333333; }
+        .company-intel { background: #f0f7ff; border: 1px solid #0a66c2; border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; display: none; }
+        .company-intel-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
         .company-intel-name { font-size: 1.1rem; font-weight: 800; color: #000000; }
         .company-intel-desc { font-size: 0.9rem; color: #444444; line-height: 1.6; margin-bottom: 16px; }
         .company-links { display: flex; gap: 8px; flex-wrap: wrap; }
-        .company-link-btn {
-            display: inline-block;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-decoration: none;
-            cursor: pointer;
-            transition: 0.2s;
-            width: auto;
-            margin-top: 0;
-        }
+        .company-link-btn { display: inline-block; padding: 8px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; text-decoration: none; cursor: pointer; transition: 0.2s; width: auto; margin-top: 0; }
         .btn-google { background: #ffffff; color: #444; border: 1px solid #e0e0e0; }
         .btn-google:hover { background: #f1f3f4; }
         .btn-linkedin { background: #0a66c2; color: #ffffff; border: none; }
@@ -240,59 +130,18 @@
         .btn-mca:hover { background: #e55a00; }
         .intel-loading { color: #0a66c2; font-size: 0.85rem; display: none; }
         .divider { border: none; border-top: 1px solid #e0e0e0; margin: 24px 0; }
-        .history-card {
-            background: #ffffff;
-            border: 1px solid #e0e0e0;
-            border-radius: 16px;
-            padding: 28px 36px;
-            width: 100%;
-            max-width: 720px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            margin-top: 24px;
-            display: none;
-        }
-        .history-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
+        .history-card { background: #ffffff; border: 1px solid #e0e0e0; border-radius: 16px; padding: 28px 36px; width: 100%; max-width: 720px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-top: 24px; display: none; }
+        .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .history-title { font-size: 1rem; font-weight: 800; color: #000000; }
-        .clear-btn {
-            width: auto;
-            padding: 6px 16px;
-            background: #fff0f0;
-            color: #dc2626;
-            border: 1px solid #dc2626;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            margin-top: 0;
-        }
+        .clear-btn { width: auto; padding: 6px 16px; background: #fff0f0; color: #dc2626; border: 1px solid #dc2626; border-radius: 20px; font-size: 0.8rem; font-weight: 700; margin-top: 0; }
         .clear-btn:hover { background: #dc2626; color: #ffffff; }
-        .history-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 14px 16px;
-            border-radius: 10px;
-            margin-bottom: 8px;
-            border: 1px solid #e0e0e0;
-            background: #f9f9f9;
-            cursor: pointer;
-            transition: 0.2s;
-        }
+        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-radius: 10px; margin-bottom: 8px; border: 1px solid #e0e0e0; background: #f9f9f9; cursor: pointer; transition: 0.2s; }
         .history-item:hover { border-color: #0a66c2; background: #f0f7ff; }
         .history-item-left { display: flex; flex-direction: column; gap: 3px; }
         .history-company { font-size: 0.95rem; font-weight: 700; color: #000000; }
         .history-role { font-size: 0.8rem; color: #666666; }
         .history-date { font-size: 0.75rem; color: #aaaaaa; margin-top: 2px; }
-        .history-score {
-            font-size: 1.2rem;
-            font-weight: 900;
-            padding: 6px 14px;
-            border-radius: 20px;
-        }
+        .history-score { font-size: 1.2rem; font-weight: 900; padding: 6px 14px; border-radius: 20px; }
         .score-red { background: #fff5f5; color: #dc2626; }
         .score-yellow { background: #fffbeb; color: #d97706; }
         .score-green { background: #f0fdf4; color: #16a34a; }
@@ -304,26 +153,26 @@
         <div class="logo">TrustJob<span>AI</span></div>
         <div class="tagline">AI-powered Job Scam Detector</div>
         <div class="badge">⚡ Powered by Groq AI</div>
+        <div class="user-bar" id="userBar">
+            <img id="userAvatar" src="" alt="avatar">
+            <span id="userName"></span>
+            <button class="logout-btn" onclick="handleLogout()">Sign Out</button>
+        </div>
     </div>
 
     <div class="card">
         <div class="label">Paste Job Description</div>
         <textarea id="jobInput" placeholder="Paste any job description here — AI will extract details and detect if it's a scam..."></textarea>
-
         <div class="or-divider">— OR UPLOAD SCREENSHOTS —</div>
-
         <div class="upload-area" id="uploadArea">
             <input type="file" id="imageInput" accept="image/*" multiple onchange="handleImageUpload(event)">
             <p>📸 <span>Click to upload</span> or drag & drop job screenshots</p>
             <p style="font-size:0.8rem; color:#aaa; margin-top:4px">Max 5 images · PNG, JPG supported</p>
         </div>
-
         <div class="preview-container" id="previewContainer"></div>
         <div class="image-count" id="imageCount"></div>
-
         <button id="analyzeBtn" onclick="analyzeJob()">🔍 Analyze Job Now</button>
         <div class="loader" id="loader">⏳ Analyzing with AI — please wait...</div>
-
         <div class="result" id="result">
             <hr class="divider">
             <div class="score-box" id="scoreBox">
@@ -335,21 +184,18 @@
             <div class="section-title">🏢 Company Intelligence</div>
             <div class="intel-loading" id="intelLoading">🔍 Searching company info...</div>
             <div class="company-intel" id="companyIntel">
-                <div class="company-intel-header">
-                    <span>🏢</span>
-                    <span class="company-intel-name" id="intelName"></span>
-                </div>
+                <div class="company-intel-header"><span>🏢</span><span class="company-intel-name" id="intelName"></span></div>
                 <div class="company-intel-desc" id="intelDesc"></div>
                 <div class="company-links" id="companyLinks"></div>
             </div>
-            <div class="section-title"> AI Analysis</div>
+            <div class="section-title">🔍 AI Analysis</div>
             <div class="reasons" id="reasons"></div>
         </div>
     </div>
 
     <div class="history-card" id="historyCard">
         <div class="history-header">
-            <span class="history-title"> Recent Analysis History</span>
+            <span class="history-title">🕒 Recent Analysis History</span>
             <button class="clear-btn" onclick="clearHistory()">🗑️ Clear All</button>
         </div>
         <div id="historyList"></div>
@@ -358,11 +204,42 @@
     <div class="footer">TrustJobAI — Helping job seekers stay safe · Built with Groq AI</div>
 
     <script>
+        const PUBLISHABLE_KEY = "pk_test_d2lzZS1tb25hcmNoLTg3LmNsZXJrLmFjY291bnRzLmRldiQ";
         let uploadedImages = [];
+        let clerkInstance = null;
 
-        window.onload = function() { renderHistory(); };
+        async function initClerk() {
+            const clerk = new Clerk(PUBLISHABLE_KEY);
+            await clerk.load();
+            clerkInstance = clerk;
 
-        // ✅ IMAGE COMPRESSION — fixes large image error
+            if (!clerk.user) {
+                window.location.href = "/login";
+                return;
+            }
+
+            const userBar = document.getElementById('userBar');
+            const userName = document.getElementById('userName');
+            const userAvatar = document.getElementById('userAvatar');
+            userBar.style.display = 'flex';
+            userName.textContent = clerk.user.firstName || clerk.user.emailAddresses[0].emailAddress;
+            if (clerk.user.imageUrl) {
+                userAvatar.src = clerk.user.imageUrl;
+            } else {
+                userAvatar.style.display = 'none';
+            }
+            renderHistory();
+        }
+
+        async function handleLogout() {
+            if (clerkInstance) {
+                await clerkInstance.signOut();
+                window.location.href = "/login";
+            }
+        }
+
+        window.onload = initClerk;
+
         function compressImage(file, callback) {
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -372,11 +249,9 @@
                     const MAX = 800;
                     let w = img.width, h = img.height;
                     if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
-                    canvas.width = w;
-                    canvas.height = h;
+                    canvas.width = w; canvas.height = h;
                     canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                    const compressed = canvas.toDataURL('image/jpeg', 0.7);
-                    callback(compressed);
+                    callback(canvas.toDataURL('image/jpeg', 0.7));
                 };
                 img.src = e.target.result;
             };
@@ -390,7 +265,6 @@
             const previewContainer = document.getElementById('previewContainer');
             const imageCount = document.getElementById('imageCount');
             previewContainer.innerHTML = '';
-
             files.forEach((file) => {
                 compressImage(file, function(compressed) {
                     uploadedImages.push(compressed.split(',')[1]);
@@ -401,22 +275,13 @@
                     imageCount.textContent = `✅ ${uploadedImages.length} image(s) selected — ready to analyze!`;
                 });
             });
-
             document.getElementById('jobInput').value = '';
             document.getElementById('jobInput').placeholder = `${files.length} image(s) uploaded!`;
         }
 
         function saveToHistory(data) {
             const history = JSON.parse(localStorage.getItem('trustjob_history') || '[]');
-            const entry = {
-                id: Date.now(),
-                company: data.details.company,
-                role: data.details.role,
-                score: data.score,
-                verdict: data.verdict,
-                date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-            };
-            history.unshift(entry);
+            history.unshift({ id: Date.now(), company: data.details.company, role: data.details.role, score: data.score, verdict: data.verdict, date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) });
             if (history.length > 20) history.pop();
             localStorage.setItem('trustjob_history', JSON.stringify(history));
             renderHistory();
@@ -430,48 +295,28 @@
             historyCard.style.display = 'block';
             historyList.innerHTML = history.map(item => {
                 const scoreClass = item.score < 40 ? 'score-red' : item.score < 70 ? 'score-yellow' : 'score-green';
-                return `<div class="history-item">
-                    <div class="history-item-left">
-                        <span class="history-company">${item.company}</span>
-                        <span class="history-role">${item.role}</span>
-                        <span class="history-date">🕒 ${item.date}</span>
-                    </div>
-                    <span class="history-score ${scoreClass}">${item.score}/100</span>
-                </div>`;
+                return `<div class="history-item"><div class="history-item-left"><span class="history-company">${item.company}</span><span class="history-role">${item.role}</span><span class="history-date">🕒 ${item.date}</span></div><span class="history-score ${scoreClass}">${item.score}/100</span></div>`;
             }).join('');
         }
 
         function clearHistory() {
-            if (confirm('Clear all history?')) {
-                localStorage.removeItem('trustjob_history');
-                renderHistory();
-            }
+            if (confirm('Clear all history?')) { localStorage.removeItem('trustjob_history'); renderHistory(); }
         }
 
         async function fetchCompanyIntel(companyName) {
-            if (!companyName || companyName === 'Not Mentioned') {
-                document.getElementById('companyIntel').style.display = 'none';
-                return;
-            }
+            if (!companyName || companyName === 'Not Mentioned') { document.getElementById('companyIntel').style.display = 'none'; return; }
             document.getElementById('intelLoading').style.display = 'block';
             document.getElementById('companyIntel').style.display = 'none';
             try {
                 const res = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(companyName + ' company')}&format=json&no_html=1&skip_disambig=1`);
                 const data = await res.json();
-                const name = data.Heading || companyName;
-                const desc = data.AbstractText || data.Answer || 'No description found. Please verify this company manually.';
-                const website = data.AbstractURL || '';
-                document.getElementById('intelName').textContent = name;
-                document.getElementById('intelDesc').textContent = desc;
+                document.getElementById('intelName').textContent = data.Heading || companyName;
+                document.getElementById('intelDesc').textContent = data.AbstractText || data.Answer || 'No description found. Please verify this company manually.';
                 const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(companyName + ' company India')}`;
                 const linkedinUrl = `https://www.linkedin.com/search/results/companies/?keywords=${encodeURIComponent(companyName)}`;
                 const mcaUrl = `https://www.mca.gov.in/mcafoportal/viewCompanyMasterData.do`;
-                let linksHtml = `
-                    <a class="company-link-btn btn-google" href="${googleUrl}" target="_blank"> Google</a>
-                    <a class="company-link-btn btn-linkedin" href="${linkedinUrl}" target="_blank"> LinkedIn</a>
-                    <a class="company-link-btn btn-mca" href="${mcaUrl}" target="_blank"> MCA Verify</a>
-                `;
-                if (website) linksHtml += `<a class="company-link-btn btn-google" href="${website}" target="_blank">🌐 Website</a>`;
+                let linksHtml = `<a class="company-link-btn btn-google" href="${googleUrl}" target="_blank">🔍 Google</a><a class="company-link-btn btn-linkedin" href="${linkedinUrl}" target="_blank">💼 LinkedIn</a><a class="company-link-btn btn-mca" href="${mcaUrl}" target="_blank">📋 MCA Verify</a>`;
+                if (data.AbstractURL) linksHtml += `<a class="company-link-btn btn-google" href="${data.AbstractURL}" target="_blank">🌐 Website</a>`;
                 document.getElementById('companyLinks').innerHTML = linksHtml;
                 document.getElementById('companyIntel').style.display = 'block';
             } catch (err) {
@@ -484,43 +329,25 @@
 
         async function analyzeJob() {
             const jobText = document.getElementById('jobInput').value.trim();
-            if (!jobText && uploadedImages.length === 0) {
-                alert('Please paste a job description or upload screenshots!');
-                return;
-            }
+            if (!jobText && uploadedImages.length === 0) { alert('Please paste a job description or upload screenshots!'); return; }
             document.getElementById('analyzeBtn').disabled = true;
             document.getElementById('loader').style.display = 'block';
             document.getElementById('result').style.display = 'none';
 
             const promptText = `You are a job scam detection expert. Analyze this job and return ONLY a JSON response:
-{
-  "score": <0-100, 0=fake, 100=legitimate>,
-  "verdict": "<HIGH RISK, MODERATE RISK, or LOOKS SAFE>",
-  "details": {
-    "company": "<company name or Not Mentioned>",
-    "role": "<job role or Not Mentioned>",
-    "location": "<location or Not Mentioned>",
-    "salary": "<salary or Not Mentioned>",
-    "email": "<email or Not Found>",
-    "phone": "<phone or Not Found>",
-    "experience": "<experience or Not Mentioned>"
-  },
-  "reasons": ["reason 1", "reason 2", "reason 3"]
-}
+{"score":<0-100>,"verdict":"<HIGH RISK, MODERATE RISK, or LOOKS SAFE>","details":{"company":"<or Not Mentioned>","role":"<or Not Mentioned>","location":"<or Not Mentioned>","salary":"<or Not Mentioned>","email":"<or Not Found>","phone":"<or Not Found>","experience":"<or Not Mentioned>"},"reasons":["reason 1","reason 2","reason 3"]}
 Red flags: training fee, unrealistic salary, WhatsApp only, no company name, vague role, asking personal info upfront.`;
 
             try {
                 let messages, model;
                 if (uploadedImages.length > 0) {
-                    const imageContent = uploadedImages.map(img => ({ type: "image_url", image_url: { url: `data:image/jpeg;base64,${img}` } }));
-                    messages = [{ role: "user", content: [...imageContent, { type: "text", text: promptText }] }];
+                    messages = [{ role: "user", content: [...uploadedImages.map(img => ({ type: "image_url", image_url: { url: `data:image/jpeg;base64,${img}` } })), { type: "text", text: promptText }] }];
                     model = "meta-llama/llama-4-scout-17b-16e-instruct";
                 } else {
                     messages = [{ role: "user", content: `${promptText}\n\nJob Description:\n"${jobText}"` }];
                     model = "llama-3.3-70b-versatile";
                 }
 
-                // ✅ BACKEND PROXY — API key safe hai server pe
                 const response = await fetch("/analyze", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -528,14 +355,9 @@ Red flags: training fee, unrealistic salary, WhatsApp only, no company name, vag
                 });
 
                 const data = await response.json();
+                if (data.error) { alert('Error: ' + data.error); return; }
 
-                if (data.error) {
-                    alert('Error: ' + data.error);
-                    return;
-                }
-
-                const text = data.choices[0].message.content;
-                const clean = text.replace(/```json|```/g, "").trim();
+                const clean = data.choices[0].message.content.replace(/```json|```/g, "").trim();
                 const parsed = JSON.parse(clean);
                 showResult(parsed);
                 saveToHistory(parsed);
@@ -558,15 +380,14 @@ Red flags: training fee, unrealistic salary, WhatsApp only, no company name, vag
             if (data.score < 40) scoreBox.classList.add('red');
             else if (data.score < 70) scoreBox.classList.add('yellow');
             else scoreBox.classList.add('green');
-            const d = data.details;
             const fields = [
-                { label: ' Company', value: d.company },
-                { label: ' Role', value: d.role },
-                { label: ' Location', value: d.location },
-                { label: ' Salary', value: d.salary },
-                { label: ' Email', value: d.email },
-                { label: ' Phone', value: d.phone },
-                { label: ' Experience', value: d.experience }
+                { label: '🏢 Company', value: data.details.company },
+                { label: '💼 Role', value: data.details.role },
+                { label: '📍 Location', value: data.details.location },
+                { label: '💰 Salary', value: data.details.salary },
+                { label: '📧 Email', value: data.details.email },
+                { label: '📞 Phone', value: data.details.phone },
+                { label: '⏳ Experience', value: data.details.experience }
             ];
             document.getElementById('jobDetails').innerHTML = fields.map(f => {
                 const isNotFound = f.value === 'Not Mentioned' || f.value === 'Not Found';
